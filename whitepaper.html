@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DRT Pipeline — Bach BWV 847 forward and backward</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #ffffff; color: #1a1a1a; font-family: 'Inter', system-ui, -apple-system, sans-serif; -webkit-font-smoothing: antialiased; font-size: 15px; line-height: 1.65; padding: 64px 48px; max-width: 760px; margin: 0 auto; }
+  h1 { color: #0a0a0a; font-weight: 400; font-size: 32px; line-height: 1.2; letter-spacing: -0.01em; margin: 0 0 8px; }
+  h2 { color: #0a0a0a; font-weight: 500; font-size: 18px; line-height: 1.4; margin: 32px 0 12px; }
+  h3 { color: #0a0a0a; font-weight: 500; font-size: 15px; line-height: 1.4; margin: 24px 0 10px; }
+  p { color: #2a2a2a; margin: 0 0 14px; }
+  ul, ol { margin: 10px 0 14px 22px; }
+  li { color: #2a2a2a; margin: 6px 0; }
+  a { color: #cc0000; text-decoration: none; border-bottom: 1px dotted rgba(204,0,0,0.4); }
+  a:hover { border-bottom-color: #cc0000; }
+  em { color: #cc0000; font-style: italic; }
+  strong { color: #0a0a0a; font-weight: 600; }
+  code { font-family: 'SF Mono', 'Menlo', 'Courier New', monospace; font-size: 13px; background: #f7f7f8; padding: 2px 6px; border-radius: 3px; color: #1a1a1a; }
+  pre { background: #f7f7f8; border-left: 3px solid #cc0000; padding: 14px 18px; border-radius: 4px; overflow-x: auto; margin: 16px 0; font: 13px/1.6 'SF Mono', 'Menlo', 'Courier New', monospace; color: #1a1a1a; }
+  pre code { background: none; padding: 0; color: #1a1a1a; font-size: inherit; }
+  blockquote { border-left: 3px solid #cc0000; padding: 10px 16px; margin: 24px 0; font-size: 13px; line-height: 1.6; color: #555; background: #fdf6f6; font-style: italic; border-radius: 0 4px 4px 0; }
+  blockquote strong { color: #0a0a0a; font-style: normal; }
+  hr { border: none; border-top: 1px solid #e8e8e8; margin: 32px 0; }
+  .subtitle { color: #888; font-style: italic; margin-bottom: 20px; font-size: 15px; }
+  .figure { margin: 24px 0; padding: 16px; background: #f7f7f8; border: 1px solid #e8e8e8; border-radius: 4px; text-align: center; }
+  .figure svg { max-width: 100%; }
+  .figure .caption { color: #888; font: 13px 'SF Mono', 'Menlo', monospace; font-style: italic; margin-top: 10px; text-align: center; }
+  .toc { background: #f7f7f8; border: 1px solid #e8e8e8; border-radius: 4px; padding: 16px 22px; margin: 20px 0 30px; }
+  .toc h2 { font-size: 13px; margin: 0 0 8px; border: none; padding: 0; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase; color: #0a0a0a; }
+  .toc ul { margin: 0 0 0 20px; font-size: 13px; }
+  .toc li { margin: 3px 0; }
+  .hl { color: #cc0000; font-weight: 600; }
+  .credit { color: #888; font-size: 11px; border-top: 1px solid #e8e8e8; padding-top: 16px; margin-top: 56px; }
+  .nav { color: #888; font: 13px 'SF Mono', 'Menlo', monospace; margin-bottom: 20px; }
+  .nav a { color: #cc0000; }
+  h2[id], h3[id] { scroll-margin-top: 20px; }
+  svg text { font-family: 'SF Mono', 'Menlo', 'Courier New', monospace; fill: #2a2a2a; }
+</style>
+</head>
+<body>
+<h1
+id="drt_pipeline-composer-and-decomposer-of-bwv-847-side-by-side">DRT_Pipeline
+— composer and decomposer of BWV 847, side by side</h1>
+<blockquote>
+<p><strong>Humble disclaimer.</strong> Amateur engineering project. We
+are not HPC professionals and make no competitive claims. Errors are
+likely. The pipeline is a <em>visualization of forward/backward
+symmetry</em>, not a proof of any general theorem — see <a
+href="#not">What is not in the paper</a>.</p>
+</blockquote>
+<p>GPLv3.</p>
+<hr />
+<h2 id="contents">Contents</h2>
+<ul>
+<li><a href="#what">What it is</a></li>
+<li><a href="#why">Why it matters — bio digital twins</a></li>
+<li><a href="#how">How it works — two panels, one timeline</a></li>
+<li><a href="#reading">Reading the visualization</a></li>
+<li><a href="#decoder">The companion —
+drt-decoder-of-the-encoder</a></li>
+<li><a href="#not">What is not in the paper</a></li>
+<li><a href="#refs">References</a></li>
+</ul>
+<hr />
+<h2 id="what-it-is"><a id="what"></a>What it is</h2>
+<p>A browser visualization that runs Bach’s <em>Fugue No. 2 in C
+minor</em>, BWV 847 from <em>The Well-Tempered Clavier</em>, Book I
+(1722), through a composer and a decomposer side by side, in real time,
+on the same audio timeline.</p>
+<p>The screen is split into two panels. The left panel is the
+<strong>forward pass</strong> — composition → decomposition: the fugue
+subject enters as a single melodic line, then voice by voice the demo
+unfolds the full polyphonic texture (subject entries, inversions,
+augmentations, stretto). You watch the encoder build the piece up. The
+right panel is the <strong>backward pass</strong> — decomposition →
+reconstruction: the full polyphony enters, then the demo decomposes it
+back into per-voice projections and lines them up with the original
+subject. You watch the decoder take the piece apart.</p>
+<p>Both passes run on the same audio timeline. The same Bach plays. The
+two panels move in lock-step. The point is to make the symmetry visible:
+the operators that build the fugue and the operators that take it apart
+are mirror images of each other.</p>
+<p><strong><a href="https://norayr-m.github.io/drt-pipeline/">Live demo
+→</a></strong></p>
+<p>The whole demo is a single self-contained HTML file with no build
+step, no server, and no external dependencies beyond a modern browser.
+Audio is opt-in.</p>
+<hr />
+<h2 id="why-it-matters-bio-digital-twins"><a id="why"></a>Why it matters
+— bio digital twins</h2>
+<p>A bio digital twin is a computational model of a specific biological
+system — a section of cortex, a hepatic lobule, a heart chamber — wired
+tightly enough that it can predict the system’s response to a stimulus.
+Building a twin that <em>predicts</em> (forward pass) is one half of the
+work. Building a twin that <em>retrodicts</em> (backward pass) — that
+answers <em>what stimulus produced this measured state?</em> — is the
+other half. The two are intimately related, and most of the practical
+value of a digital twin lives in being able to do both.</p>
+<p>The pipeline visualization makes the forward/backward symmetry
+mechanically obvious on a small enough example to fit in a browser tab.
+The fugue is a deliberate choice: it is one of the cleanest documented
+examples in the wild of a complex object that was <em>built by
+composition</em> and is <em>fully decomposable back into its parts</em>.
+Bach’s contrapuntal rules guarantee both directions.</p>
+<p>The framework’s interest in this is structural. If you have an
+aggregate that was assembled from many partial views via per-view return
+operators, when can you go back the other way and recover the per-view
+contributions? The fugue is a concrete answer in one specific case (yes,
+fully, and you can hear it). The general framework question is much
+harder, and the v0.1 draft handles it conditionally — see <a
+href="#not">What is not in the paper</a>.</p>
+<p>The framing for the trio (generator + cell simulator + scanner) is
+the <a
+href="https://norayr-m.github.io/drt-generator/whitepaper.html">trio
+white paper</a>. This pipeline visualization is <em>not</em> part of the
+trio — it is a paired companion to the <a
+href="https://github.com/norayr-m/decoder-of-the-encoder">decoder-of-the-encoder</a>
+repository, both using BWV 847 as their canonical example.</p>
+<hr />
+<h2 id="how-it-works-two-panels-one-timeline"><a id="how"></a>How it
+works — two panels, one timeline</h2>
+<p>The fugue subject is the musical equivalent of a function <span
+class="math inline"><em>f</em></span>. Each voice <span
+class="math inline"><em>i</em></span> of the fugue applies a projection
+<span class="math inline"><em>Π</em><sub><em>i</em></sub></span> to the
+subject — a transposition, an inversion, an augmentation in duration, a
+delay in entry — producing the voice’s local rendition. The complete
+fugue is the aggregate of all voices, with contrapuntal rules
+controlling how they interact.</p>
+<p>The forward pass shown in the left panel walks this composition step
+by step:</p>
+<pre><code>subject → Π_1(subject) → + Π_2(subject) → + Π_3(subject) → ... → full fugue</code></pre>
+<p>Each step adds one voice’s transformed copy onto what is already
+playing. By the end of the pass, the full polyphonic texture is on the
+screen and in the audio.</p>
+<p>The backward pass shown in the right panel walks the inverse:</p>
+<pre><code>full fugue → identify voice 1, subtract Π_1(subject) → identify voice 2, subtract Π_2(subject) → ... → bare subject</code></pre>
+<p>Each step removes one voice’s contribution and reveals what is left.
+By the end of the pass, only the bare subject remains, and the per-voice
+transformations have been recovered as separate panels alongside.</p>
+<p>Both passes share the same time index. As Bach’s audio plays, the
+corresponding step in each pass advances. The left panel’s “we are now
+adding voice 3” lights up at the same wall-clock moment as the right
+panel’s “we have now identified and subtracted voice 3.”</p>
+<p>The musical example is what makes this work. A fugue is
+<em>constructively decomposable</em> by definition — the contrapuntal
+rules that built it are also the rules that take it apart. The pipeline
+visualization makes that constructive symmetry visible step by step.</p>
+<hr />
+<h2 id="reading-the-visualization"><a id="reading"></a>Reading the
+visualization</h2>
+<p>When you open the live demo:</p>
+<ul>
+<li>The audio begins playing (opt-in mute is available).</li>
+<li>Two panels appear, left for forward, right for backward.</li>
+<li>The fugue subject appears in both panels as the starting point.</li>
+<li>As the audio advances, both panels animate: the left panel adds
+voices, the right panel subtracts them.</li>
+<li>The two passes meet at the middle of the timeline — the moment when
+the full polyphony is on screen and the decomposition has just
+begun.</li>
+<li>By the end, the right panel has resolved back to the bare subject,
+plus a per-voice diagram showing each transformation that was
+applied.</li>
+</ul>
+<p>What to look for:</p>
+<ul>
+<li><strong>Symmetry of timing.</strong> The forward pass adds voice
+<span class="math inline"><em>k</em></span> at the same moment the
+backward pass removes voice <span class="math inline"><em>k</em></span>.
+The mirror reflection is exact.</li>
+<li><strong>Recovery of transformations.</strong> As each voice is
+decomposed out, the right panel shows what <em>kind</em> of
+transformation that voice applied — inversion, augmentation,
+transposition, delay. The user can read these off the diagram.</li>
+<li><strong>Constructive symmetry.</strong> The two passes use the
+<em>same operators</em>. There is no “trained inverse network” doing the
+decomposition. The contrapuntal rules of the fugue are themselves the
+inverse rules.</li>
+</ul>
+<hr />
+<h2
+id="the-companion-drt-decoder-of-the-encoder"><a id="decoder"></a>The
+companion — drt-decoder-of-the-encoder</h2>
+<p>The companion repository <a
+href="https://github.com/norayr-m/decoder-of-the-encoder">decoder-of-the-encoder</a>
+takes the same fugue and lays it out as a navigable tree — voice by
+voice, subject entry by subject entry, note by note. Where the pipeline
+visualization makes the <em>forward/backward symmetry</em> visible as a
+temporal flow, the decoder visualization makes the <em>static structural
+decomposition</em> navigable as a spatial graph.</p>
+<p>The two are deliberately released as a pair. They share the musical
+example, the conceptual framework, and the rendering aesthetic. They
+illustrate two different aspects of the same compose-decompose
+question:</p>
+<ul>
+<li>Pipeline shows you that the forward and backward operators are
+mirror images on the same timeline.</li>
+<li>Decoder lets you walk the static decomposition by hand and see the
+full structure at once.</li>
+</ul>
+<p>Together they cover both the dynamic and static views of the same
+object.</p>
+<hr />
+<h2 id="what-is-not-in-the-paper"><a id="not"></a>What is not in the
+paper</h2>
+<p>The honest list of what this paper deliberately does not claim:</p>
+<ul>
+<li><strong>A general inversion theorem.</strong> The pipeline shows
+that the fugue is constructively invertible because Bach’s rules
+guarantee it. That does not generalize to arbitrary aggregates of
+partial observers. The framework’s general statements about
+decomposability are conditional on hypotheses spelled out in the v0.1
+draft.</li>
+<li><strong>A norm-growth claim.</strong> Earlier prose around this
+family of demos asserted that the aggregate of many partial views had
+bigger norm than the original signal — that <span
+class="math inline">∥<em>R</em>(<em>f</em>)∥ &gt; ∥<em>f</em>∥</span>.
+That inequality has been retracted in the v0.1 draft. The current claim
+is conditional and weaker: under four hypotheses and a bounded
+computational budget, the aggregate exposes structural features that are
+not accessible from the original signal alone within the same budget.
+The pipeline is an artistic example of forward/backward symmetry, not a
+proof of the conditional claim.</li>
+<li><strong>A general decoder for noisy aggregates.</strong> The
+pipeline runs on a clean fugue with no noise, no missing voices, no
+incomplete timing. Real bio digital twin inverse problems have all
+three. Solving the inverse problem in the noisy case requires additional
+machinery (regularisation, posterior sampling, Bayesian inverse methods)
+that the pipeline does not provide.</li>
+<li><strong>An original musicology contribution.</strong> The
+decomposition is faithful to the score and to standard fugue analysis.
+Music theorists have analyzed BWV 847 for three centuries. The
+visualization makes the analysis interactive; it does not extend
+it.</li>
+</ul>
+<hr />
+<h2 id="references"><a id="refs"></a>References</h2>
+<ul>
+<li>Bach, J. S. — <em>The Well-Tempered Clavier</em>, Book I, BWV 847
+(1722).</li>
+<li>Distributed Reconstruction work — v0.1 in preparation by N.
+Matevosyan and A. Petrosyan.</li>
+</ul>
+<p>Trio framing in detail: <a
+href="https://norayr-m.github.io/drt-generator/whitepaper.html">Generator,
+Cell Simulator, Scanner — a sparse matrix-vector trio for bio digital
+twins</a> (<a
+href="https://norayr-m.github.io/drt-generator/whitepaper.md">markdown
+source</a>). The pipeline is <em>not</em> part of the trio — it is a
+standalone forward/backward symmetry visualization paired with <a
+href="https://github.com/norayr-m/decoder-of-the-encoder">decoder-of-the-encoder</a>.</p>
+<p>Visualization co-authored with Claude (Anthropic).</p>
+<hr />
+<blockquote>
+<p><strong>Humble disclaimer.</strong> Amateur engineering project. We
+are not HPC professionals and make no competitive claims. Numbers speak;
+ego doesn’t. Errors likely.</p>
+</blockquote>
+<p>GPLv3. See <a href="LICENSE"><code>LICENSE</code></a>.</p>
+</body>
+</html>
